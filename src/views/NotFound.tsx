@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { Button, Heading, Text, LogoIcon } from '@pancakeswap/uikit'
+import { Button, Heading, Text, WinTnieLogoIcon } from '@pancakeswap/uikit'
 import Page from 'components/Layout/Page'
 import { useTranslation } from '@pancakeswap/localization'
 import Link from 'next/link'
@@ -18,9 +18,9 @@ const NotFound = () => {
   return (
     <Page>
       <StyledNotFound>
-        <LogoIcon width="64px" mb="8px" />
+        <WinTnieLogoIcon width="64px" mb="8px" />
         <Heading scale="xxl">404</Heading>
-        <Text mb="16px">{t('Oops, page not found.')}</Text>
+        <Text mb="16px">{t('Oops, page not found')}</Text>
         <Link href="/" passHref>
           <Button as="a" scale="sm">
             {t('Back Home')}
