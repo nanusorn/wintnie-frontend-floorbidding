@@ -28,7 +28,7 @@ const Nav = () => {
   return (
     <StyledNav>
       <ButtonMenu activeIndex={getActiveIndex(pathname)} scale="sm" variant="subtle">
-        <Link href="/swap" passHref>
+        <Link href="/Users/mcduck/Projects/wintnie/wintnie-frontend/src/pages.cake/swap" passHref>
           <ButtonMenuItem id="swap-nav-link" as="a">
             {t('Swap')}
           </ButtonMenuItem>
