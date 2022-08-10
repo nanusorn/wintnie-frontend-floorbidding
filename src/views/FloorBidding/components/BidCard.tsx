@@ -21,6 +21,7 @@ import { BigNumber } from '@ethersproject/bignumber'
 import { Zero } from '@ethersproject/constants'
 import { parseUnits } from '@ethersproject/units'
 import useCatchTxError from '../../../hooks/useCatchTxError'
+import { useMoralis } from "react-moralis";
 
 const Grid = styled.div`
   display: grid;
@@ -85,10 +86,11 @@ const BidCard = () => {
   // const { account } = useWeb3React()
   // const {currentRound} = useFloorBidding()
   // const {endTime, amountCollectedInCake, userTickets, status} = currentRound
-  const { account } = useWeb3React()
+  // const { account } = useWeb3React()
   // const minBetAmount = useGetMinBetAmount()
   const [errorMessage] = useState(null)
   // const { currentBiddingId, isTransitioning, currentRound } = useFloorBidding()
+  const { isAuthenticated } = useMoralis()
 
   // const [onPresentViewTicketsModal] = useModal(<ViewTicketsModal roundId={currentLotteryId} roundStatus={status} />)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -96,7 +98,9 @@ const BidCard = () => {
   const [value, setValue] = useState('0')
 
   const valueAsBn = getValueAsEthersBn(value)
-  const showFieldWarning = account && valueAsBn.gt(0) && errorMessage !== null
+  const showFieldWarning = isAuthenticated && valueAsBn.gt(0) && errorMessage !== null
+
+  const [bucketBalance, setBucketBalance] = useState("999")
 
   // const cakePriceBusd = usePriceCakeBusd()
   // const prizeInBusd = amountCollectedInCake.times(cakePriceBusd)
@@ -236,7 +240,7 @@ const BidCard = () => {
             </Text>
           </Flex>
           <Flex flexDirection="column" mb="18px">
-            <Heading color="secondary">{t('Calculating')}...</Heading>
+            <Heading color="secondary">{bucketBalance}</Heading>
           </Flex>
 
           <Flex justifyContent={['left', null, null, 'flex-start']}>
@@ -258,16 +262,16 @@ const BidCard = () => {
               value={value}
               onUserInput={handleInputChange}
               isWarning={showFieldWarning}
-              inputProps={{ disabled: !account || isTxPending }}
-              className={!account || isTxPending ? '' : 'swiper-no-swiping'}
+              inputProps={{ disabled: !isAuthenticated || isTxPending }}
+              className={!isAuthenticated || isTxPending ? '' : 'swiper-no-swiping'}
             />
           </Flex>
         </Grid>
         <Box mb="8px">
           <Button
             width="100%"
-            disabled={disabled}
-            className={disabled ? '' : 'swiper-no-swiping'}
+            disabled={!isAuthenticated}
+            className={!isAuthenticated ? '' : 'swiper-no-swiping'}
             onClick={handleEnterPosition}
             isLoading={isTxPending}
             endIcon={isTxPending ? <AutoRenewIcon color="currentColor" spin /> : null}

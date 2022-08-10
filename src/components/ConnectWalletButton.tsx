@@ -18,6 +18,7 @@ const ConnectWalletButton = ({ children, ...props }: ButtonProps) => {
   const handleClick = () => {
     if (isAuthenticated) {
       logout()
+      return
     }
 
     if (typeof __NEZHA_BRIDGE__ !== 'undefined') {
