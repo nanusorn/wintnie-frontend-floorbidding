@@ -16,6 +16,7 @@ import {
 } from '@pancakeswap/uikit'
 import { useWeb3React } from '@web3-react/core'
 import { useTranslation } from '@pancakeswap/localization'
+import { FloorBidding } from 'config/constants/types'
 import { BigNumber } from '@ethersproject/bignumber'
 import { Zero } from '@ethersproject/constants'
 import { parseUnits } from '@ethersproject/units'

@@ -24,6 +24,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import Menu from '../components/Menu'
 import Providers from '../Providers'
 import GlobalStyle from '../style/Global'
+import { MoralisProvider } from 'react-moralis'
 
 const EasterEgg = dynamic(() => import('components/EasterEgg'), { ssr: false })
 
@@ -91,7 +92,9 @@ function MyApp(props: AppProps) {
           <GlobalCheckClaimStatus excludeLocations={[]} />
           <PersistGate loading={null} persistor={persistor}>
             <Updaters />
-            <App {...props} />
+            <MoralisProvider serverUrl="https://kovtxzun8pyb.usemoralis.com:2053/server" appId="swcydwVcV8LQQHJV5EtHTIQZaE5MXI5EdyV6Ypn8">
+              <App {...props} />
+            </MoralisProvider>
           </PersistGate>
         </Blocklist>
       </Providers>

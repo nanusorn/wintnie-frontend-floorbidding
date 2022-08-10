@@ -238,3 +238,8 @@ export enum FetchStatus {
   Fetched = 'FETCHED',
   Failed = 'FAILED',
 }
+
+export interface FloorBidding {
+  account: string,
+  bidValue: BigNumber,
+}
