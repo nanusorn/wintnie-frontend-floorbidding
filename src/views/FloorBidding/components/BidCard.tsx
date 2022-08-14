@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import {useEffect, useState} from 'react'
 import styled from 'styled-components'
 import {
   Card,
@@ -22,6 +22,7 @@ import { Zero } from '@ethersproject/constants'
 import { parseUnits } from '@ethersproject/units'
 import useCatchTxError from '../../../hooks/useCatchTxError'
 import { useMoralis } from "react-moralis";
+import Moralis from "moralis";
 
 const Grid = styled.div`
   display: grid;
@@ -90,17 +91,66 @@ const BidCard = () => {
   // const minBetAmount = useGetMinBetAmount()
   const [errorMessage] = useState(null)
   // const { currentBiddingId, isTransitioning, currentRound } = useFloorBidding()
-  const { isAuthenticated } = useMoralis()
+  const { isAuthenticated, user } = useMoralis()
 
   // const [onPresentViewTicketsModal] = useModal(<ViewTicketsModal roundId={currentLotteryId} roundStatus={status} />)
   const [isExpanded, setIsExpanded] = useState(false)
   // const ticketBuyIsDisabled = status !== LotteryStatus.OPEN || isTransitioning
-  const [value, setValue] = useState('0')
+  const [value, setValue] = useState('')
+  const [depositValue, setDepositValue] = useState('')
 
   const valueAsBn = getValueAsEthersBn(value)
+  const depositValueAsBn = getValueAsEthersBn(depositValue)
   const showFieldWarning = isAuthenticated && valueAsBn.gt(0) && errorMessage !== null
-
   const [bucketBalance, setBucketBalance] = useState("999")
+  const currentAccount = async () => {
+    try {
+      console.log(user!.get('ethAddress'))
+    } catch (err) {
+      console.log(err);
+    }
+  }
+  const getContractOwner = async () => {
+    // await Moralis.enableWeb3();
+    const ABI = [
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address payable",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+    ];
+    const options = {
+      contractAddress: "0x3fC3bc57b2a799Defd0BD0d04D6dF24A661fCEb4",
+      functionName: "owner",
+      abi: ABI,
+      params: {},
+    };
+    // const contractOwner = await Moralis.executeFunction(options);
+    // const currentAddress = user.get('ethAddress');
+    // console.log("-----> ", contractOwner);
+    // console.log("-----> ", currentAddress);
+    // if (contractOwner == currentAddress) {
+    //   return true;
+    // }
+    // return false;
+  }
+  const [isContractOwner, setIsContractOwner] = useState(false)
+  useEffect(() => {
+    if (currentAccount() == getContractOwner()) {
+      setIsContractOwner(true)
+    } else {
+      setIsContractOwner(false)
+    }
+  }, [currentAccount, getContractOwner, setIsContractOwner]);
+
 
   // const cakePriceBusd = usePriceCakeBusd()
   // const prizeInBusd = amountCollectedInCake.times(cakePriceBusd)
@@ -152,6 +202,10 @@ const BidCard = () => {
     setValue(input)
   }
 
+  const handleDepositValueChange = (input: string) => {
+    setDepositValue(input)
+  }
+
   // useEffect(() => {
   //   const inputAmount = getValueAsEthersBn(value)
   // }, [value])
@@ -161,6 +215,132 @@ const BidCard = () => {
   const handleEnterPosition = async () => {
     // const betMethod = position === BetPosition.BULL ? 'betBull' : 'betBear'
     // betMethod;
+  }
+
+  const handleBidding = async () => {
+    await Moralis.enableWeb3();
+    const ABI = [
+      {
+        "inputs": [
+          {
+            "internalType": "enum GameType",
+            "name": "gameType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint32",
+            "name": "number",
+            "type": "uint32"
+          }
+        ],
+        "name": "bet",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+    ];
+    const options = {
+      contractAddress: "0x3fC3bc57b2a799Defd0BD0d04D6dF24A661fCEb4",
+      functionName: "bet",
+      abi: ABI,
+      params: {
+        gameType: 0,
+        number: 1,
+      },
+    };
+    const result = await Moralis.executeFunction(options);
+    console.log("bet result: ", result);
+  }
+
+  const handleGetOwner = async () => {
+    await Moralis.enableWeb3();
+    const ABI = [
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address payable",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+    ];
+    const options = {
+      contractAddress: "0x3fC3bc57b2a799Defd0BD0d04D6dF24A661fCEb4",
+      functionName: "owner",
+      abi: ABI,
+      params: {},
+    };
+    const address = await Moralis.executeFunction(options);
+    console.log("result: ", address);
+  }
+
+  const handleStartGame = async () => {
+    await Moralis.enableWeb3();
+    const ABI = [
+      {
+        "inputs": [
+          {
+            "internalType": "enum GameType",
+            "name": "gameType",
+            "type": "uint8"
+          }
+        ],
+        "name": "startGame",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+    const options = {
+      contractAddress: "0x3fC3bc57b2a799Defd0BD0d04D6dF24A661fCEb4",
+      // functionName: "startGame",
+      functionName: "startGame",
+      abi: ABI,
+      params: {
+        gameType: 0,
+      },
+    };
+    // const transaction = await Moralis.executeFunction(options);
+    // const result = await transaction.value();
+    // console.log("Result: ", result);
+    const address = await Moralis.executeFunction(options);
+    console.log("result: ", address);
+  }
+
+  const handleEndGame = async () => {
+    await Moralis.enableWeb3()
+    const ABI = [{
+      inputs: [
+        {
+          internalType: "enum GameType",
+          name: "gameType",
+          type: "uint8"
+        }
+      ],
+      name: "endGame",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    }];
+    const options = {
+      contractAddress: "0x3fC3bc57b2a799Defd0BD0d04D6dF24A661fCEb4",
+      functionName: "endGame",
+      abi: ABI,
+      params: {
+        gameType: 0,
+      },
+    };
+    const result = await Moralis.executeFunction(options);
+    console.log("result: ", result);
+  }
+
+  const handleTransfer = async () => {
+
   }
 
   // const Logo = useMemo(() => {
@@ -272,12 +452,53 @@ const BidCard = () => {
             width="100%"
             disabled={!isAuthenticated}
             className={!isAuthenticated ? '' : 'swiper-no-swiping'}
-            onClick={handleEnterPosition}
+            onClick={handleBidding}
             isLoading={isTxPending}
             endIcon={isTxPending ? <AutoRenewIcon color="currentColor" spin /> : null}
           >
             {t(key, { symbol: 'WINT' })}
           </Button>
+        </Box>
+        <Box mb="8px">
+          <Button
+            width="50%"
+            disabled={!isAuthenticated && !isContractOwner}
+            onClick={handleStartGame}
+          >
+            {"Start Game"}
+          </Button>
+          <Button
+            width="50%"
+            disabled={!isAuthenticated && !isContractOwner}
+            onClick={handleEndGame}
+          >
+            {"End Game"}
+          </Button>
+
+          <Grid>
+            <Flex alignItems="center" justifyContent="space-between" mb="8px">
+              <Text textAlign="left" color="textsubtitle">
+                {t('Deposit your coin')}
+              </Text>
+            </Flex>
+            <Flex flexDirection="column" mb="18px">
+              <BalanceInput
+                value={depositValue}
+                onUserInput={handleDepositValueChange}
+                isWarning={showFieldWarning}
+                inputProps={{ disabled: !isAuthenticated || isTxPending }}
+                className={!isAuthenticated || isTxPending ? '' : 'swiper-no-swiping'}
+              />
+            </Flex>
+            <Button
+              width="50%"
+              disabled={!isAuthenticated}
+              onClick={handleTransfer}
+            >
+              {"Transfer to wallet"}
+            </Button>
+          </Grid>
+
         </Box>
       </CardBody>
       <CardFooter p="0">
@@ -287,7 +508,6 @@ const BidCard = () => {
               {isExpanded ? t('Hide') : t('Your current round details')}
             </ExpandableLabel>
           </Flex>
-
       </CardFooter>
     </StyledCard>
   )
