@@ -128,7 +128,7 @@ const Menu: React.FC<NavProps> = ({
     <MenuContext.Provider value={{ linkComponent }}>
       <Wrapper>
         <FixedContainer showMenu={showMenu} height={totalTopMenuHeight}>
-          {banner && <TopBannerContainer height={topBannerHeight}>{banner}</TopBannerContainer>}
+          {/*{banner && <TopBannerContainer height={topBannerHeight}>{banner}</TopBannerContainer>}*/}
           <StyledNav>
             <Flex>
               <WinTnieLogo isDark={isDark} href={homeLink?.href ?? "/"} />

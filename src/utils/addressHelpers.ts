@@ -7,6 +7,12 @@ export const getAddress = (address: Address, chainId?: number): string => {
   return address[chainId] ? address[chainId] : address[ChainId.BSC]
 }
 
+export const getFloorBiddingAddress = (chainId?: number) => {
+  return getAddress(addresses.floorBidding, chainId)
+}
+export const getWalletAddress = (chainId?: number) => {
+  return getAddress(addresses.wallet, chainId)
+}
 export const getMasterChefAddress = () => {
   return getAddress(addresses.masterChef)
 }
