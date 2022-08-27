@@ -1,10 +1,10 @@
 export default {
   floorBidding: {
-    97: '0xAb26494256379580c0F4655b15a43e6e2C618bac',
+    97: '0xcABb5aE71383bc42ff642C323D94dB88eFd24D3C',
     56: '',
   },
   wallet: {
-    97: '0x1bB5D6fafd0C41E499c7Ac16610d99481A1dDDb2',
+    97: '0x5023cCbF8572E2970c166277757061f5f04D8acC',
     56: '',
   },
   masterChef: {

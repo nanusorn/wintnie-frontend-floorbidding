@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import styled from 'styled-components'
 import {
     Card,
@@ -10,7 +10,7 @@ import {
     Button,
     Box,
     CardFooter,
-    ExpandableLabel, BalanceInput,
+    ExpandableLabel, BalanceInput, Alert, alertVariants,
 } from '@pancakeswap/uikit'
 import {useTranslation} from '@pancakeswap/localization'
 import {BigNumber} from '@ethersproject/bignumber'
@@ -19,9 +19,13 @@ import {parseUnits} from '@ethersproject/units'
 // import {useApiContract, useMoralis} from "react-moralis";
 import useCatchTxError from "../../../hooks/useCatchTxError";
 import {useGetTestOwner} from "../hooks/useGetTestOwner";
-import {getFloorBiddingAddress} from "../../../utils/addressHelpers";
+import {getFloorBiddingAddress, getWalletAddress} from "../../../utils/addressHelpers";
 import floorBiddingAbi from "../../../config/abi/floorBidding.json";
+import walletAbi from "../../../config/abi/wallet.json";
 import Moralis from "moralis";
+import {ToastContainer} from "../../../components/Toast";
+import {sample} from "lodash";
+import useToast from "../../../hooks/useToast";
 
 const Grid = styled.div`
   display: grid;
@@ -78,8 +82,11 @@ const BidCard = () => {
     const chainId = 97;
     const {t} = useTranslation();
     // const {isAuthenticated} = useMoralis();
+    const [toasts, setToasts] = useState([]);
+    const [bidStatus, setBidStatus] = useState('-');
     const [bucketBalance, setBucketBalance] = useState('0');
     const [bidValue, setBidValue] = useState('');
+    const [isWinner, setIsWinner] = useState(false);
     const [errorMessage] = useState(null);
     const valueAsBn = getValueAsEthersBn(bidValue);
     const {key, disabled} = getButtonProps(valueAsBn, Zero, BigNumber.from(0));
@@ -89,29 +96,72 @@ const BidCard = () => {
     const {loading: isTxPending} = useCatchTxError()
     const {isContractOwner} = useGetTestOwner();
 
-    const handleInputChange = () => {
-
+    const handleInputChange = (input: string) => {
+        setBidValue(input)
     }
 
     const handleBidding = async () => {
-        console.log("submit Bidding called");
-        // setIsSubmittingBid(true);
-        // await Moralis.enableWeb3()
-        // const options = {
-        //     contractAddress: getFloorBiddingAddress(chainId),
-        //     functionName: "bet",
-        //     abi: floorBiddingAbi,
-        //     chain: "bsc testnet",
-        //     params: {
-        //         // gameType: BigNumber.from(0),
-        //         // number: BigNumber.from(3),
-        //         gameType: 0,
-        //         number: 4,
-        //     }
-        // };
-        // await Moralis.executeFunction(options);
-        // setIsSubmittingBid(false);
+        setIsSubmittingBid(true);
+        await Moralis.enableWeb3()
+        const options = {
+            contractAddress: getFloorBiddingAddress(chainId),
+            functionName: "bet",
+            abi: floorBiddingAbi,
+            chain: "bsc testnet",
+            params: {
+                gameType: 0,
+                number: +bidValue,
+            }
+        };
+        let result = await Moralis.executeFunction(options);
+        let receipt = await result.wait(1);
+        receipt.events.forEach( (element) => {
+            if (element.event != undefined) {
+                if (element.event == "AnnounceWinner") {
+                    setBidStatus("WINNER");
+                    activateToast("WINNER");
+                    setIsWinner(true);
+                } else if (element.event == "AnnounceWinnerChange") {
+                    setBidStatus("Winner changed");
+                    activateToast("Winner changed");
+                    setIsWinner(false);
+                }
+                // element.args.forEach( (arg) => {
+                //     console.log(arg)
+                // });
+            }
+        });
+        setIsSubmittingBid(false);
     }
+
+    const activateToast = (description = "") => {
+        const now = Date.now();
+        const randomToast = {
+            id: `id-${now}`,
+            title: `Title: ${now}`,
+            description,
+            type: alertVariants[sample(Object.keys(alertVariants))],
+        };
+        setToasts((prevToasts) => [randomToast, ...prevToasts]);
+    }
+
+    const handleTransferWallet = async () => {
+        await Moralis.enableWeb3()
+        const options = {
+            contractAddress: getWalletAddress(chainId),
+            functionName: "deposit",
+            abi: walletAbi,
+            chain: "bsc testnet",
+            msgValue: Moralis.Units.ETH("0.01"),
+            params: {
+            }
+        };
+        await Moralis.executeFunction(options);
+    }
+
+    const handleRemove = (id: string) => {
+        setToasts((prevToasts) => prevToasts.filter((prevToast) => prevToast.id !== id));
+    };
 
     return (
         <StyledCard>
@@ -157,7 +207,7 @@ const BidCard = () => {
                         </Text>
                     </Flex>
                     <Flex flexDirection="column" mb="18px">
-                        <Heading color="green">{t('Winner')}</Heading>
+                        <Heading color={isWinner ? "green" : "blue"}>{t(bidStatus)}</Heading>
                     </Flex>
 
                     <Flex alignItems="center" justifyContent="space-between" mb="8px">
@@ -187,6 +237,19 @@ const BidCard = () => {
                     >
                         {t('Submit Your Bid')}
                     </Button>
+
+                    <Button
+                        width="100%"
+                        disabled={isContractOwner}
+                        // className={!isAuthenticated ? '' : 'swiper-no-swiping'}
+                        onClick={handleTransferWallet}
+                        // isLoading={isTxPending}
+                        isLoading={isSubmittingBid}
+                        // endIcon={isTxPending ? <AutoRenewIcon color="currentColor" spin /> : null}
+                    >
+                        {t('transfer wallet')}
+                    </Button>
+
                 </Box>
             </CardBody>
             <CardFooter p="0">
@@ -197,6 +260,7 @@ const BidCard = () => {
                     </ExpandableLabel>
                 </Flex>
             </CardFooter>
+            <ToastContainer toasts={toasts} onRemove={handleRemove} />
         </StyledCard>
     )
 }
