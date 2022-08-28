@@ -287,6 +287,11 @@
             "type": "uint16"
           },
           {
+            "internalType": "uint24",
+            "name": "duration",
+            "type": "uint24"
+          },
+          {
             "internalType": "uint256",
             "name": "price",
             "type": "uint256"
@@ -295,11 +300,6 @@
             "internalType": "uint256",
             "name": "startedAt",
             "type": "uint256"
-          },
-          {
-            "internalType": "uint24",
-            "name": "duration",
-            "type": "uint24"
           },
           {
             "internalType": "uint256",

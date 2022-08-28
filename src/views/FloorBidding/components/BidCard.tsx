@@ -26,6 +26,8 @@ import Moralis from "moralis";
 import {ToastContainer} from "../../../components/Toast";
 import {sample} from "lodash";
 import useToast from "../../../hooks/useToast";
+import {useBiddingStatus} from "../hooks/useBiddingStatus";
+import {useMoralisQuery} from "react-moralis";
 
 const Grid = styled.div`
   display: grid;
@@ -82,12 +84,15 @@ const BidCard = () => {
     const chainId = 97;
     const {t} = useTranslation();
     // const {isAuthenticated} = useMoralis();
+    const { gameStatus } = useBiddingStatus('0');
     const [toasts, setToasts] = useState([]);
     const [bidStatus, setBidStatus] = useState('-');
+    const [gameType, setGameType] = useState('');
+    const [sessionID, setSessionID] = useState('');
     const [bucketBalance, setBucketBalance] = useState('0');
+    const [sessionEndAt, setSessionEndAt] = useState('');
     const [bidValue, setBidValue] = useState('');
     const [isWinner, setIsWinner] = useState(false);
-    const [errorMessage] = useState(null);
     const valueAsBn = getValueAsEthersBn(bidValue);
     const {key, disabled} = getButtonProps(valueAsBn, Zero, BigNumber.from(0));
     const [isExpanded, setIsExpanded] = useState(false);
@@ -113,25 +118,26 @@ const BidCard = () => {
                 number: +bidValue,
             }
         };
-        let result = await Moralis.executeFunction(options);
-        let receipt = await result.wait(1);
-        receipt.events.forEach( (element) => {
-            if (element.event != undefined) {
-                if (element.event == "AnnounceWinner") {
-                    setBidStatus("WINNER");
-                    activateToast("WINNER");
-                    setIsWinner(true);
-                } else if (element.event == "AnnounceWinnerChange") {
-                    setBidStatus("Winner changed");
-                    activateToast("Winner changed");
-                    setIsWinner(false);
+        try {
+            let result = await Moralis.executeFunction(options);
+            let receipt = await result.wait(1);
+            receipt.events.forEach((element) => {
+                if (element.event != undefined) {
+                    if (element.event == "AnnounceWinner") {
+                        setBidStatus("WINNER");
+                        activateToast("WINNER");
+                        setIsWinner(true);
+                    } else if (element.event == "AnnounceWinnerChange") {
+                        setBidStatus("Winner changed");
+                        activateToast("Winner changed");
+                        setIsWinner(false);
+                    }
                 }
-                // element.args.forEach( (arg) => {
-                //     console.log(arg)
-                // });
-            }
-        });
-        setIsSubmittingBid(false);
+            });
+            setIsSubmittingBid(false);
+        } catch(error) {
+            setIsSubmittingBid(false);
+        }
     }
 
     const activateToast = (description = "") => {
@@ -163,12 +169,28 @@ const BidCard = () => {
         setToasts((prevToasts) => prevToasts.filter((prevToast) => prevToast.id !== id));
     };
 
+    useEffect(() => {
+        if (gameStatus != null) {
+            setGameType(gameStatus.gameType.toString());
+            setSessionID(gameStatus.gameId.toString());
+            setBucketBalance(Moralis.Units.FromWei(gameStatus.prize.toString(), 12));
+            let endingTimeStamp = gameStatus.startedAt.toNumber() + gameStatus.duration;
+            setSessionEndAt(formatDateTime(endingTimeStamp));
+        }
+    }, [gameStatus])
+
+    const formatDateTime = (timestamp: Number) => {
+        const d = new Date(timestamp * 1000);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ' ' + d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() ;
+    }
+
     return (
         <StyledCard>
             <CardHeader p="16px 24px">
                 <Flex justifyContent="space-between">
                     <Heading mr="12px">{t('Floor Bidding')}</Heading>
-                    <Text>Game type: 0, </Text>
+                    <Text>Game type: {gameType}</Text>
                 </Flex>
             </CardHeader>
             <CardBody>
@@ -180,7 +202,7 @@ const BidCard = () => {
                         </Text>
                     </Flex>
                     <Flex flexDirection="column" mb="18px">
-                        <Heading color="secondary">{bucketBalance}</Heading>
+                        <Heading color="secondary">{sessionID}</Heading>
                     </Flex>
 
                     <Flex justifyContent={['left', null, null, 'flex-start']}>
@@ -189,7 +211,7 @@ const BidCard = () => {
                         </Text>
                     </Flex>
                     <Flex flexDirection="column" mb="18px">
-                        <Heading color="secondary">Aug 11, 2022 00:00 AM</Heading>
+                        <Heading color="secondary">{sessionEndAt}</Heading>
                     </Flex>
 
                     <Flex justifyContent={['left', null, null, 'flex-start']}>
@@ -218,6 +240,7 @@ const BidCard = () => {
                     <Flex flexDirection="column" mb="18px">
                         <BalanceInput
                             value={bidValue}
+                            placeholder={'0'}
                             onUserInput={handleInputChange}
                             // isWarning={showFieldWarning}
                             // inputProps={{disabled: !isAuthenticated || isTxPending}}
@@ -253,7 +276,7 @@ const BidCard = () => {
                 </Box>
             </CardBody>
             <CardFooter p="0">
-                {isExpanded && <PreviousWrapper>Hello World!!!</PreviousWrapper>}
+                {isExpanded && <PreviousWrapper>Hello World!!!<br/>World of WarCraft</PreviousWrapper>}
                 <Flex p="8px 24px" alignItems="center" justifyContent="center">
                     <ExpandableLabel expanded={isExpanded} onClick={() => setIsExpanded(!isExpanded)}>
                         {isExpanded ? t('Hide') : t('Your current round details')}
