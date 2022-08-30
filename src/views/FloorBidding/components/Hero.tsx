@@ -31,7 +31,7 @@ const Decorations = styled.div`
   height: 100%;
   background: url(/images/decorations/bg-dotdotdot.svg);
   background-repeat: no-repeat;
-  background-position: center 0;
+  background-position: center 100;
 `
 
 const Hero = () => {

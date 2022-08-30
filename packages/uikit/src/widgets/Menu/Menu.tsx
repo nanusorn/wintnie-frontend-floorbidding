@@ -87,7 +87,8 @@ const Menu: React.FC<NavProps> = ({
 
   const topBannerHeight = isMobile ? TOP_BANNER_HEIGHT_MOBILE : TOP_BANNER_HEIGHT;
 
-  const totalTopMenuHeight = banner ? MENU_HEIGHT + topBannerHeight : MENU_HEIGHT;
+  // const totalTopMenuHeight = banner ? MENU_HEIGHT + topBannerHeight : MENU_HEIGHT;
+  const totalTopMenuHeight = MENU_HEIGHT;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -135,6 +136,16 @@ const Menu: React.FC<NavProps> = ({
               {!isMobile && <MenuItems items={links} activeItem={activeItem} activeSubItem={activeSubItem} ml="24px" />}
             </Flex>
             <Flex alignItems="center" height="100%">
+              {/*<Box mt="4px">*/}
+              {/*  <LangSelector*/}
+              {/*      currentLang={currentLang}*/}
+              {/*      langs={langs}*/}
+              {/*      setLang={setLang}*/}
+              {/*      buttonScale="xs"*/}
+              {/*      color="textSubtle"*/}
+              {/*      hideLanguage*/}
+              {/*  />*/}
+              {/*</Box>              */}
               {rightSide}
             </Flex>
           </StyledNav>

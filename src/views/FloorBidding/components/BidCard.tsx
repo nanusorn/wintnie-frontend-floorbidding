@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from 'react'
+import {useEffect, useState} from 'react'
 import styled from 'styled-components'
 import {
     Card,
@@ -10,13 +10,14 @@ import {
     Button,
     Box,
     CardFooter,
-    ExpandableLabel, BalanceInput, Alert, alertVariants,
+    alertVariants,
+    BalanceInput,
+    ExpandableLabel,
 } from '@pancakeswap/uikit'
 import {useTranslation} from '@pancakeswap/localization'
 import {BigNumber} from '@ethersproject/bignumber'
 import {Zero} from '@ethersproject/constants'
 import {parseUnits} from '@ethersproject/units'
-// import {useApiContract, useMoralis} from "react-moralis";
 import useCatchTxError from "../../../hooks/useCatchTxError";
 import {useGetTestOwner} from "../hooks/useGetTestOwner";
 import {getFloorBiddingAddress, getWalletAddress} from "../../../utils/addressHelpers";
@@ -25,8 +26,8 @@ import walletAbi from "../../../config/abi/wallet.json";
 import Moralis from "moralis";
 import {ToastContainer} from "../../../components/Toast";
 import {sample} from "lodash";
-import useToast from "../../../hooks/useToast";
 import {useBiddingStatus} from "../hooks/useBiddingStatus";
+import {useBidHistory} from "../hooks/useBidHistory";
 import {useMoralisQuery} from "react-moralis";
 
 const Grid = styled.div`
@@ -83,7 +84,7 @@ const getButtonProps = (value: BigNumber, bnbBalance: BigNumber, minBetAmountBal
 const BidCard = () => {
     const chainId = 97;
     const {t} = useTranslation();
-    // const {isAuthenticated} = useMoralis();
+    const { refreshHistory, bidHistory } = useBidHistory();
     const { gameStatus } = useBiddingStatus('0');
     const [toasts, setToasts] = useState([]);
     const [bidStatus, setBidStatus] = useState('-');
@@ -173,17 +174,40 @@ const BidCard = () => {
         if (gameStatus != null) {
             setGameType(gameStatus.gameType.toString());
             setSessionID(gameStatus.gameId.toString());
-            setBucketBalance(Moralis.Units.FromWei(gameStatus.prize.toString(), 12));
+            setBucketBalance(Moralis.Units.FromWei(gameStatus.prize.toString(), 18));
             let endingTimeStamp = gameStatus.startedAt.toNumber() + gameStatus.duration;
             setSessionEndAt(formatDateTime(endingTimeStamp));
         }
     }, [gameStatus])
 
-    const formatDateTime = (timestamp: Number) => {
+    const formatDateTime = (timestamp: number) => {
         const d = new Date(timestamp * 1000);
         const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ' ' + d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds() ;
     }
+
+    const { fetch } = useMoralisQuery(
+        "FloorBiddingAnnounceBet",
+        (query) => query.equalTo(
+            "bettor",
+            "0x6207be8a813e9ecdff6f388b99a8108edf8b9cee"
+        ).equalTo("gameType", "0").equalTo("gameId", "3"),
+        [],
+        { autoFetch: false }
+    )
+    const handleRefresh = () => {
+        // refreshHistory();
+        const basicQuery = async () => {
+            const results = await fetch();
+            alert("Successfully retrieved " + results.length );
+            for (let i = 0; i < results.length; i++) {
+                const object = results[i];
+                console.log(object.id + " - " + object.get("createdAt"));
+            }
+        };
+        basicQuery();
+    }
+
 
     return (
         <StyledCard>
@@ -216,7 +240,7 @@ const BidCard = () => {
 
                     <Flex justifyContent={['left', null, null, 'flex-start']}>
                         <Text textAlign="left" color="textSubtle">
-                            {t('Prize Bucket')}
+                            {t('Prize Bucket (BNB)')}
                         </Text>
                     </Flex>
                     <Flex flexDirection="column" mb="18px">
@@ -271,6 +295,18 @@ const BidCard = () => {
                         // endIcon={isTxPending ? <AutoRenewIcon color="currentColor" spin /> : null}
                     >
                         {t('transfer wallet')}
+                    </Button>
+
+                    <Button
+                        width="100%"
+                        disabled={isContractOwner}
+                        // className={!isAuthenticated ? '' : 'swiper-no-swiping'}
+                        onClick={handleRefresh}
+                        // isLoading={isTxPending}
+                        isLoading={isSubmittingBid}
+                        // endIcon={isTxPending ? <AutoRenewIcon color="currentColor" spin /> : null}
+                    >
+                        {t('refresh')}
                     </Button>
 
                 </Box>
